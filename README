@@ -1,0 +1,16 @@
+# based on https://github.com/jpetazzo/squid-in-a-can
+
+# build the image
+docker build -t charlesboyo/squid3 .
+
+# create the container
+mkdir /data/squid3
+chmod ugo+w /data/squid3/
+CTID=`docker run --net host -d -v /data/squid3:/var/cache/squid3 --name squid charlesboyo/squid3`
+tail -f /var/lib/docker/aufs/mnt/$CTID/var/log/squid3/*
+
+# start redirecting traffic to it
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to 3129 -w
+
+# stop redirecting traffic to it
+iptables -t nat -D PREROUTING -p tcp --dport 80 -j REDIRECT --to 3129 -w
